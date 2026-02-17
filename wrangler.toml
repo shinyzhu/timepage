@@ -1,2 +1,5 @@
 name = "timepage"
-pages_build_output_dir = "public"
+compatibility_date = "2026-02-17"
+
+[assets]
+directory = "public"
