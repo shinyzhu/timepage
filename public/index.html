@@ -117,42 +117,139 @@
 (() => {
   // ---- Data ----
   const POPULAR = [
+    // Americas
     {zone:'Pacific/Honolulu',label:'Honolulu'},
     {zone:'America/Anchorage',label:'Anchorage'},
     {zone:'America/Los_Angeles',label:'Los Angeles'},
+    {zone:'America/Vancouver',label:'Vancouver'},
     {zone:'America/Denver',label:'Denver'},
+    {zone:'America/Phoenix',label:'Phoenix'},
     {zone:'America/Chicago',label:'Chicago'},
+    {zone:'America/Mexico_City',label:'Mexico City'},
     {zone:'America/New_York',label:'New York'},
+    {zone:'America/Toronto',label:'Toronto'},
+    {zone:'America/Bogota',label:'Bogotá'},
+    {zone:'America/Lima',label:'Lima'},
+    {zone:'America/Santiago',label:'Santiago'},
     {zone:'America/Sao_Paulo',label:'São Paulo'},
+    {zone:'America/Buenos_Aires',label:'Buenos Aires'},
+    // Europe
     {zone:'Atlantic/Reykjavik',label:'Reykjavik'},
     {zone:'Europe/London',label:'London'},
+    {zone:'Europe/Dublin',label:'Dublin'},
+    {zone:'Europe/Lisbon',label:'Lisbon'},
     {zone:'Europe/Paris',label:'Paris'},
+    {zone:'Europe/Amsterdam',label:'Amsterdam'},
+    {zone:'Europe/Brussels',label:'Brussels'},
     {zone:'Europe/Berlin',label:'Berlin'},
+    {zone:'Europe/Zurich',label:'Zurich'},
+    {zone:'Europe/Madrid',label:'Madrid'},
+    {zone:'Europe/Rome',label:'Rome'},
+    {zone:'Europe/Vienna',label:'Vienna'},
+    {zone:'Europe/Prague',label:'Prague'},
+    {zone:'Europe/Warsaw',label:'Warsaw'},
+    {zone:'Europe/Stockholm',label:'Stockholm'},
+    {zone:'Europe/Oslo',label:'Oslo'},
+    {zone:'Europe/Copenhagen',label:'Copenhagen'},
+    {zone:'Europe/Helsinki',label:'Helsinki'},
+    {zone:'Europe/Athens',label:'Athens'},
+    {zone:'Europe/Bucharest',label:'Bucharest'},
+    {zone:'Europe/Istanbul',label:'Istanbul'},
     {zone:'Europe/Moscow',label:'Moscow'},
+    // Africa
+    {zone:'Africa/Casablanca',label:'Casablanca'},
+    {zone:'Africa/Lagos',label:'Lagos'},
     {zone:'Africa/Cairo',label:'Cairo'},
     {zone:'Africa/Nairobi',label:'Nairobi'},
+    {zone:'Africa/Johannesburg',label:'Johannesburg'},
+    // Middle East
+    {zone:'Asia/Jerusalem',label:'Jerusalem'},
+    {zone:'Asia/Riyadh',label:'Riyadh'},
     {zone:'Asia/Dubai',label:'Dubai'},
+    {zone:'Asia/Tehran',label:'Tehran'},
+    // South & Central Asia
     {zone:'Asia/Karachi',label:'Karachi'},
     {zone:'Asia/Kolkata',label:'Mumbai'},
+    {zone:'Asia/Colombo',label:'Colombo'},
     {zone:'Asia/Dhaka',label:'Dhaka'},
+    {zone:'Asia/Kathmandu',label:'Kathmandu'},
+    // Southeast Asia
     {zone:'Asia/Bangkok',label:'Bangkok'},
+    {zone:'Asia/Ho_Chi_Minh',label:'Ho Chi Minh'},
+    {zone:'Asia/Jakarta',label:'Jakarta'},
     {zone:'Asia/Singapore',label:'Singapore'},
+    {zone:'Asia/Kuala_Lumpur',label:'Kuala Lumpur'},
+    {zone:'Asia/Manila',label:'Manila'},
+    // East Asia
     {zone:'Asia/Shanghai',label:'Shanghai'},
+    {zone:'Asia/Hong_Kong',label:'Hong Kong'},
+    {zone:'Asia/Taipei',label:'Taipei'},
     {zone:'Asia/Seoul',label:'Seoul'},
     {zone:'Asia/Tokyo',label:'Tokyo'},
+    // Oceania
+    {zone:'Australia/Perth',label:'Perth'},
+    {zone:'Australia/Adelaide',label:'Adelaide'},
     {zone:'Australia/Sydney',label:'Sydney'},
+    {zone:'Australia/Melbourne',label:'Melbourne'},
+    {zone:'Australia/Brisbane',label:'Brisbane'},
     {zone:'Pacific/Auckland',label:'Auckland'},
+    {zone:'Pacific/Fiji',label:'Fiji'},
   ];
 
-  // Build full list from Intl API
+  // Common timezone abbreviations / codes → IANA zone mapping
+  const TZ_ALIASES = {
+    // North America
+    'HST':'Pacific/Honolulu','HAST':'Pacific/Honolulu',
+    'AKST':'America/Anchorage','AKDT':'America/Anchorage',
+    'PST':'America/Los_Angeles','PDT':'America/Los_Angeles','PT':'America/Los_Angeles',
+    'MST':'America/Denver','MDT':'America/Denver','MT':'America/Denver',
+    'CST':'America/Chicago','CDT':'America/Chicago','CT':'America/Chicago',
+    'EST':'America/New_York','EDT':'America/New_York','ET':'America/New_York',
+    'AST':'America/Halifax','ADT':'America/Halifax',
+    'NST':'America/St_Johns','NDT':'America/St_Johns',
+    // Europe
+    'GMT':'Europe/London','BST':'Europe/London','UTC':'Etc/UTC',
+    'WET':'Europe/Lisbon','WEST':'Europe/Lisbon',
+    'CET':'Europe/Paris','CEST':'Europe/Paris',
+    'EET':'Europe/Athens','EEST':'Europe/Athens',
+    'MSK':'Europe/Moscow',
+    // Asia
+    'IST':'Asia/Kolkata','PKT':'Asia/Karachi',
+    'NPT':'Asia/Kathmandu',
+    'BST_BD':'Asia/Dhaka','BDT':'Asia/Dhaka',
+    'ICT':'Asia/Bangkok',
+    'WIB':'Asia/Jakarta','WITA':'Asia/Makassar','WIT':'Asia/Jayapura',
+    'SGT':'Asia/Singapore','MYT':'Asia/Kuala_Lumpur',
+    'PHT':'Asia/Manila','PHST':'Asia/Manila',
+    'CST_CN':'Asia/Shanghai','HKT':'Asia/Hong_Kong',
+    'KST':'Asia/Seoul',
+    'JST':'Asia/Tokyo',
+    // Middle East
+    'IRST':'Asia/Tehran','GST':'Asia/Dubai',
+    'AST_AR':'Asia/Riyadh',
+    'IDT':'Asia/Jerusalem',
+    // Africa
+    'WAT':'Africa/Lagos','CAT':'Africa/Johannesburg','EAT':'Africa/Nairobi',
+    'SAST':'Africa/Johannesburg',
+    // Oceania
+    'AWST':'Australia/Perth','ACST':'Australia/Adelaide','ACDT':'Australia/Adelaide',
+    'AEST':'Australia/Sydney','AEDT':'Australia/Sydney',
+    'NZST':'Pacific/Auckland','NZDT':'Pacific/Auckland',
+  };
+
+  // Build full list from Intl API with alias search tags
   let ALL_ZONES;
   try {
     ALL_ZONES = Intl.supportedValuesOf('timeZone').map(tz => {
       const label = tz.split('/').pop().replace(/_/g,' ');
-      return {zone:tz, label};
+      // Collect all abbreviation aliases that point to this zone
+      const aliases = Object.entries(TZ_ALIASES)
+        .filter(([,v]) => v === tz)
+        .map(([k]) => k);
+      return {zone:tz, label, aliases};
     });
   } catch {
-    ALL_ZONES = POPULAR;
+    ALL_ZONES = POPULAR.map(p => ({...p, aliases:[]}));
   }
 
   const STORAGE_KEY = 'timepage_zones';
@@ -294,10 +391,32 @@
 
   function populateList(query) {
     const q = query.toLowerCase().trim();
-    const source = q ? ALL_ZONES : POPULAR;
-    const filtered = source.filter(z =>
-      z.label.toLowerCase().includes(q) || z.zone.toLowerCase().includes(q)
-    ).slice(0, 40);
+
+    // Check if query matches a TZ abbreviation exactly → show that zone first
+    const aliasMatch = q ? Object.entries(TZ_ALIASES).find(([k]) => k.toLowerCase() === q) : null;
+
+    let source, filtered;
+    if (!q) {
+      source = POPULAR;
+      filtered = source;
+    } else {
+      // Search ALL_ZONES by label, full zone path, region, and aliases
+      filtered = ALL_ZONES.filter(z => {
+        const lbl = z.label.toLowerCase();
+        const zn = z.zone.toLowerCase().replace(/_/g,' ');
+        const region = z.zone.split('/')[0].toLowerCase();
+        const aliasHit = z.aliases && z.aliases.some(a => a.toLowerCase().includes(q));
+        return lbl.includes(q) || zn.includes(q) || region.includes(q) || aliasHit;
+      });
+
+      // Boost alias exact-match to top
+      if (aliasMatch) {
+        const matchZone = aliasMatch[1];
+        filtered.sort((a, b) => (a.zone === matchZone ? -1 : b.zone === matchZone ? 1 : 0));
+      }
+    }
+
+    filtered = filtered.slice(0, 50);
 
     $list.innerHTML = '';
     const now = new Date();
@@ -308,7 +427,8 @@
         const parts = new Intl.DateTimeFormat('en-US',{timeZone:z.zone,timeZoneName:'shortOffset'}).formatToParts(now);
         off = parts.find(p => p.type === 'timeZoneName')?.value || '';
       } catch {}
-      li.innerHTML = `<span>${esc(z.label)}</span><span class="tz-offset">${esc(off)}</span>`;
+      const aliasTag = z.aliases && z.aliases.length ? ` (${z.aliases.join(', ')})` : '';
+      li.innerHTML = `<span>${esc(z.label)}${esc(aliasTag)}</span><span class="tz-offset">${esc(off)}</span>`;
       li.addEventListener('click', () => { addZone(z.zone, z.label); closeModal(); });
       $list.appendChild(li);
     });
