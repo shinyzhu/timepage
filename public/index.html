@@ -95,6 +95,33 @@
   }
   #empty.show{display:flex}
   #empty span{font-size:.9rem}
+
+  /* --- Mobile: vertical list --- */
+  @media(max-width:600px){
+    html,body{overflow:auto}
+    #zones{flex-direction:column;height:auto;min-height:100vh;width:100%}
+    .zone{
+      flex:none;height:auto;min-height:0;padding:1.2rem .5rem;
+      border-right:none;border-bottom:1px solid var(--border);
+      flex-direction:row;flex-wrap:wrap;justify-content:space-between;gap:.1rem .8rem;
+    }
+    .zone:last-child{border-bottom:none}
+    .zone .city{margin-bottom:0;font-size:.75rem;width:100%;text-align:left}
+    .zone .time{font-size:1.8rem;order:1}
+    .zone .seconds{font-size:.8rem;order:2;margin-top:.35rem}
+    .zone .date{margin-top:0;order:3;font-size:.7rem}
+    .zone .offset{margin-top:0;order:4;font-size:.65rem}
+    .zone .remove-btn{opacity:.5;top:auto;bottom:8px;right:8px;font-size:.9rem}
+    .zone.day,.zone.night{background:none}
+
+    .add-zone{
+      width:100%;min-width:unset;height:44px;flex-direction:row;opacity:.5;
+      border:none!important;border-top:1px dashed var(--border)!important;
+    }
+    .add-zone .add-label{writing-mode:horizontal-tb;font-size:.65rem;opacity:1}
+    .add-zone:hover{width:100%;min-width:unset;height:44px}
+    .add-zone.left{border-top:none!important;border-bottom:1px dashed var(--border)!important}
+  }
 </style>
 </head>
 <body>
