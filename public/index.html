@@ -245,9 +245,14 @@
   }
 
   // ---- Zone management ----
+  let insertPosition = 'end'; // 'start' or 'end'
   function addZone(zone, label) {
     if (zones.some(z => z.zone === zone)) return;
-    zones.push({zone, label});
+    if (insertPosition === 'start') {
+      zones.unshift({zone, label});
+    } else {
+      zones.push({zone, label});
+    }
     saveZones();
     render();
   }
@@ -278,7 +283,8 @@
   function onDragEnd() { this.style.opacity = ''; dragIdx = null; }
 
   // ---- Modal ----
-  function openModal() {
+  function openModal(position) {
+    insertPosition = position || 'end';
     $modal.classList.add('open');
     $search.value = '';
     populateList('');
@@ -309,8 +315,8 @@
   }
 
   $search.addEventListener('input', () => populateList($search.value));
-  $addLeft.addEventListener('click', openModal);
-  $addRight.addEventListener('click', openModal);
+  $addLeft.addEventListener('click', () => openModal('start'));
+  $addRight.addEventListener('click', () => openModal('end'));
   $modal.addEventListener('click', e => { if(e.target === $modal) closeModal(); });
   document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
 
