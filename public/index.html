@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimePage</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0f0f0f;
+    --col-bg:#1a1a1a;
+    --col-hover:#222;
+    --text:#e0e0e0;
+    --text-dim:#777;
+    --accent:#4fc3f7;
+    --border:#2a2a2a;
+  }
+  html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+
+  /* --- Zone Columns --- */
+  #zones{display:flex;height:100vh;width:100%}
+  .zone{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border-right:1px solid var(--border);position:relative;transition:background .2s;
+    min-width:0;
+  }
+  .zone:last-child{border-right:none}
+  .zone:hover{background:var(--col-hover)}
+  .zone .city{font-size:clamp(.75rem,1.6vw,1.1rem);text-transform:uppercase;letter-spacing:.12em;color:var(--text-dim);margin-bottom:.6rem}
+  .zone .time{font-size:clamp(1.8rem,5vw,4rem);font-weight:200;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+  .zone .seconds{font-size:clamp(.7rem,1.4vw,.95rem);color:var(--text-dim);margin-top:.2rem;font-variant-numeric:tabular-nums}
+  .zone .date{font-size:clamp(.6rem,1.1vw,.8rem);color:var(--text-dim);margin-top:.8rem;letter-spacing:.05em}
+  .zone .offset{font-size:clamp(.55rem,1vw,.75rem);color:var(--accent);margin-top:.3rem;opacity:.7}
+  .zone .remove-btn{
+    position:absolute;top:8px;right:10px;background:none;border:none;color:var(--text-dim);
+    cursor:pointer;font-size:1rem;opacity:0;transition:opacity .2s;line-height:1;
+  }
+  .zone:hover .remove-btn{opacity:1}
+  .zone .remove-btn:hover{color:#e57373}
+
+  /* Day/night subtle indicator */
+  .zone.night{background:linear-gradient(180deg,#0d1117 0%,#161b22 100%)}
+  .zone.day{background:linear-gradient(180deg,#1c2333 0%,#1a1a2e 100%)}
+
+  /* --- Add Button --- */
+  #add-zone{
+    display:flex;align-items:center;justify-content:center;min-width:48px;width:48px;
+    cursor:pointer;border:none;background:var(--col-bg);color:var(--text-dim);
+    font-size:1.5rem;border-left:1px solid var(--border);transition:all .2s;flex-shrink:0;
+  }
+  #add-zone:hover{background:var(--col-hover);color:var(--accent)}
+
+  /* --- Modal --- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;
+    justify-content:center;z-index:100;backdrop-filter:blur(4px);
+  }
+  .modal-overlay.open{display:flex}
+  .modal{
+    background:#1e1e1e;border:1px solid var(--border);border-radius:10px;padding:1.5rem;
+    width:340px;max-height:70vh;display:flex;flex-direction:column;
+  }
+  .modal h2{font-size:.95rem;font-weight:500;margin-bottom:.8rem;color:var(--text-dim);letter-spacing:.05em}
+  .modal input{
+    width:100%;padding:.55rem .75rem;background:#2a2a2a;border:1px solid #3a3a3a;
+    border-radius:6px;color:var(--text);font-size:.85rem;outline:none;margin-bottom:.6rem;
+  }
+  .modal input:focus{border-color:var(--accent)}
+  .modal .tz-list{overflow-y:auto;flex:1;margin:0;padding:0;list-style:none}
+  .modal .tz-list li{
+    padding:.5rem .65rem;cursor:pointer;border-radius:5px;font-size:.82rem;
+    display:flex;justify-content:space-between;color:var(--text);
+  }
+  .modal .tz-list li:hover{background:#2a2a2a}
+  .modal .tz-list li .tz-offset{color:var(--text-dim);font-size:.75rem}
+  .modal .close-btn{
+    position:absolute;top:.5rem;right:.75rem;background:none;border:none;
+    color:var(--text-dim);cursor:pointer;font-size:1.1rem;
+  }
+
+  /* --- Empty state --- */
+  #empty{
+    display:none;flex:1;align-items:center;justify-content:center;flex-direction:column;
+    color:var(--text-dim);gap:.5rem;
+  }
+  #empty.show{display:flex}
+  #empty span{font-size:.9rem}
+</style>
+</head>
+<body>
+
+<div id="zones">
+  <div id="empty"><span>Click + to add a time zone</span></div>
+</div>
+<button id="add-zone" title="Add time zone">+</button>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>Add Time Zone</h2>
+    <input id="tz-search" type="text" placeholder="Search city or zone…" autocomplete="off" autofocus>
+    <ul class="tz-list" id="tz-list"></ul>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ---- Data ----
+  const POPULAR = [
+    {zone:'Pacific/Honolulu',label:'Honolulu'},
+    {zone:'America/Anchorage',label:'Anchorage'},
+    {zone:'America/Los_Angeles',label:'Los Angeles'},
+    {zone:'America/Denver',label:'Denver'},
+    {zone:'America/Chicago',label:'Chicago'},
+    {zone:'America/New_York',label:'New York'},
+    {zone:'America/Sao_Paulo',label:'São Paulo'},
+    {zone:'Atlantic/Reykjavik',label:'Reykjavik'},
+    {zone:'Europe/London',label:'London'},
+    {zone:'Europe/Paris',label:'Paris'},
+    {zone:'Europe/Berlin',label:'Berlin'},
+    {zone:'Europe/Moscow',label:'Moscow'},
+    {zone:'Africa/Cairo',label:'Cairo'},
+    {zone:'Africa/Nairobi',label:'Nairobi'},
+    {zone:'Asia/Dubai',label:'Dubai'},
+    {zone:'Asia/Karachi',label:'Karachi'},
+    {zone:'Asia/Kolkata',label:'Mumbai'},
+    {zone:'Asia/Dhaka',label:'Dhaka'},
+    {zone:'Asia/Bangkok',label:'Bangkok'},
+    {zone:'Asia/Singapore',label:'Singapore'},
+    {zone:'Asia/Shanghai',label:'Shanghai'},
+    {zone:'Asia/Seoul',label:'Seoul'},
+    {zone:'Asia/Tokyo',label:'Tokyo'},
+    {zone:'Australia/Sydney',label:'Sydney'},
+    {zone:'Pacific/Auckland',label:'Auckland'},
+  ];
+
+  // Build full list from Intl API
+  let ALL_ZONES;
+  try {
+    ALL_ZONES = Intl.supportedValuesOf('timeZone').map(tz => {
+      const label = tz.split('/').pop().replace(/_/g,' ');
+      return {zone:tz, label};
+    });
+  } catch {
+    ALL_ZONES = POPULAR;
+  }
+
+  const STORAGE_KEY = 'timepage_zones';
+  const DEFAULT_ZONES = [
+    {zone:'America/New_York',label:'New York'},
+    {zone:'Europe/London',label:'London'},
+    {zone:'Asia/Tokyo',label:'Tokyo'},
+    {zone:'Australia/Sydney',label:'Sydney'},
+  ];
+
+  // ---- State ----
+  let zones = loadZones();
+
+  function loadZones() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) { const parsed = JSON.parse(raw); if (parsed.length) return parsed; }
+    } catch {}
+    return [...DEFAULT_ZONES];
+  }
+  function saveZones() { localStorage.setItem(STORAGE_KEY, JSON.stringify(zones)); }
+
+  // ---- DOM refs ----
+  const $zones = document.getElementById('zones');
+  const $empty = document.getElementById('empty');
+  const $modal = document.getElementById('modal');
+  const $search = document.getElementById('tz-search');
+  const $list = document.getElementById('tz-list');
+  const $addBtn = document.getElementById('add-zone');
+
+  // ---- Rendering ----
+  function render() {
+    $zones.querySelectorAll('.zone').forEach(el => el.remove());
+    $empty.classList.toggle('show', zones.length === 0);
+
+    zones.forEach((z, i) => {
+      const col = document.createElement('div');
+      col.className = 'zone';
+      col.dataset.zone = z.zone;
+      col.dataset.index = i;
+      col.innerHTML = `
+        <button class="remove-btn" title="Remove">&times;</button>
+        <div class="city">${esc(z.label)}</div>
+        <div class="time"></div>
+        <div class="seconds"></div>
+        <div class="date"></div>
+        <div class="offset"></div>
+      `;
+      col.querySelector('.remove-btn').addEventListener('click', () => removeZone(i));
+
+      // Drag support
+      col.draggable = true;
+      col.addEventListener('dragstart', onDragStart);
+      col.addEventListener('dragover', onDragOver);
+      col.addEventListener('drop', onDrop);
+      col.addEventListener('dragend', onDragEnd);
+
+      $zones.insertBefore(col, $empty);
+    });
+    tick();
+  }
+
+  function tick() {
+    const now = new Date();
+    document.querySelectorAll('.zone').forEach(col => {
+      const tz = col.dataset.zone;
+      try {
+        const timeFmt = new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'2-digit',minute:'2-digit',hour12:false});
+        const secFmt  = new Intl.DateTimeFormat('en-US',{timeZone:tz,second:'2-digit'});
+        const dateFmt = new Intl.DateTimeFormat('en-US',{timeZone:tz,weekday:'short',month:'short',day:'numeric'});
+        const offFmt  = new Intl.DateTimeFormat('en-US',{timeZone:tz,timeZoneName:'shortOffset'});
+
+        col.querySelector('.time').textContent = timeFmt.format(now);
+        col.querySelector('.seconds').textContent = ':' + secFmt.format(now).padStart(2,'0');
+        col.querySelector('.date').textContent = dateFmt.format(now);
+
+        const offParts = offFmt.formatToParts(now);
+        const offStr = offParts.find(p => p.type === 'timeZoneName')?.value || '';
+        col.querySelector('.offset').textContent = offStr;
+
+        // Day/night indicator (6-18 = day)
+        const hourStr = new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',hour12:false}).format(now);
+        const h = parseInt(hourStr, 10);
+        col.classList.toggle('day', h >= 6 && h < 18);
+        col.classList.toggle('night', h < 6 || h >= 18);
+      } catch {}
+    });
+  }
+
+  // ---- Zone management ----
+  function addZone(zone, label) {
+    if (zones.some(z => z.zone === zone)) return;
+    zones.push({zone, label});
+    saveZones();
+    render();
+  }
+  function removeZone(i) {
+    zones.splice(i, 1);
+    saveZones();
+    render();
+  }
+
+  // ---- Drag & drop reorder ----
+  let dragIdx = null;
+  function onDragStart(e) {
+    dragIdx = +this.dataset.index;
+    this.style.opacity = '.4';
+    e.dataTransfer.effectAllowed = 'move';
+  }
+  function onDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+  function onDrop(e) {
+    e.preventDefault();
+    const toIdx = +this.dataset.index;
+    if (dragIdx !== null && dragIdx !== toIdx) {
+      const [moved] = zones.splice(dragIdx, 1);
+      zones.splice(toIdx, 0, moved);
+      saveZones();
+      render();
+    }
+  }
+  function onDragEnd() { this.style.opacity = ''; dragIdx = null; }
+
+  // ---- Modal ----
+  function openModal() {
+    $modal.classList.add('open');
+    $search.value = '';
+    populateList('');
+    setTimeout(() => $search.focus(), 50);
+  }
+  function closeModal() { $modal.classList.remove('open'); }
+
+  function populateList(query) {
+    const q = query.toLowerCase().trim();
+    const source = q ? ALL_ZONES : POPULAR;
+    const filtered = source.filter(z =>
+      z.label.toLowerCase().includes(q) || z.zone.toLowerCase().includes(q)
+    ).slice(0, 40);
+
+    $list.innerHTML = '';
+    const now = new Date();
+    filtered.forEach(z => {
+      const li = document.createElement('li');
+      let off = '';
+      try {
+        const parts = new Intl.DateTimeFormat('en-US',{timeZone:z.zone,timeZoneName:'shortOffset'}).formatToParts(now);
+        off = parts.find(p => p.type === 'timeZoneName')?.value || '';
+      } catch {}
+      li.innerHTML = `<span>${esc(z.label)}</span><span class="tz-offset">${esc(off)}</span>`;
+      li.addEventListener('click', () => { addZone(z.zone, z.label); closeModal(); });
+      $list.appendChild(li);
+    });
+  }
+
+  $search.addEventListener('input', () => populateList($search.value));
+  $addBtn.addEventListener('click', openModal);
+  $modal.addEventListener('click', e => { if(e.target === $modal) closeModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  // ---- Helpers ----
+  function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  // ---- Init ----
+  render();
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
