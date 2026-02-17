@@ -42,13 +42,23 @@
   .zone.night{background:linear-gradient(180deg,#0d1117 0%,#161b22 100%)}
   .zone.day{background:linear-gradient(180deg,#1c2333 0%,#1a1a2e 100%)}
 
-  /* --- Add Button --- */
-  #add-zone{
-    display:flex;align-items:center;justify-content:center;min-width:48px;width:48px;
-    cursor:pointer;border:none;background:var(--col-bg);color:var(--text-dim);
-    font-size:1.5rem;border-left:1px solid var(--border);transition:all .2s;flex-shrink:0;
+  /* --- Add Buttons (edge gutters) --- */
+  .add-zone{
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.3rem;
+    min-width:28px;width:28px;cursor:pointer;border:none;background:transparent;
+    color:var(--text-dim);font-size:1.3rem;transition:all .25s ease;flex-shrink:0;
+    opacity:.25;position:relative;overflow:hidden;
   }
-  #add-zone:hover{background:var(--col-hover);color:var(--accent)}
+  .add-zone .add-label{
+    font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;writing-mode:vertical-rl;
+    text-orientation:mixed;opacity:0;transition:opacity .25s;
+  }
+  .add-zone:hover{
+    width:54px;min-width:54px;opacity:1;background:var(--col-hover);color:var(--accent);
+  }
+  .add-zone:hover .add-label{opacity:1}
+  .add-zone.left{border-right:1px solid var(--border)}
+  .add-zone.right{border-left:1px solid var(--border)}
 
   /* --- Modal --- */
   .modal-overlay{
@@ -90,9 +100,10 @@
 <body>
 
 <div id="zones">
+  <button class="add-zone left" title="Add time zone">+<span class="add-label">Add Zone</span></button>
   <div id="empty"><span>Click + to add a time zone</span></div>
+  <button class="add-zone right" title="Add time zone">+<span class="add-label">Add Zone</span></button>
 </div>
-<button id="add-zone" title="Add time zone">+</button>
 
 <div class="modal-overlay" id="modal">
   <div class="modal">
@@ -170,7 +181,8 @@
   const $modal = document.getElementById('modal');
   const $search = document.getElementById('tz-search');
   const $list = document.getElementById('tz-list');
-  const $addBtn = document.getElementById('add-zone');
+  const $addLeft = $zones.querySelector('.add-zone.left');
+  const $addRight = $zones.querySelector('.add-zone.right');
 
   // ---- Rendering ----
   function render() {
@@ -199,7 +211,8 @@
       col.addEventListener('drop', onDrop);
       col.addEventListener('dragend', onDragEnd);
 
-      $zones.insertBefore(col, $empty);
+      // Insert before the right add-button
+      $zones.insertBefore(col, $addRight);
     });
     tick();
   }
@@ -296,7 +309,8 @@
   }
 
   $search.addEventListener('input', () => populateList($search.value));
-  $addBtn.addEventListener('click', openModal);
+  $addLeft.addEventListener('click', openModal);
+  $addRight.addEventListener('click', openModal);
   $modal.addEventListener('click', e => { if(e.target === $modal) closeModal(); });
   document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
 
