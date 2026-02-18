@@ -2,15 +2,6 @@
   "name": "timepage",
   "version": "1.0.0",
   "description": "A fast-loading start page showing multiple time zones as columns",
-  "type": "module",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
-  },
   "keywords": ["timezone", "startpage", "clock"],
-  "license": "MIT",
-  "dependencies": {
-    "express": "^5.1.0"
-  }
+  "license": "MIT"
 }
