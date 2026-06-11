@@ -135,7 +135,7 @@
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <h2>Add Time Zone</h2>
-    <input id="tz-search" type="text" placeholder="Search city or zone…" autocomplete="off" autofocus>
+    <input id="tz-search" type="text" placeholder="Search city, airport code, or zone…" autocomplete="off" autofocus>
     <ul class="tz-list" id="tz-list"></ul>
   </div>
 </div>
@@ -223,6 +223,95 @@
     {zone:'Pacific/Fiji',label:'Fiji'},
   ];
 
+  // IATA airport / city codes → IANA zone
+  const AIRPORT_CODES = {
+    // Americas
+    'HNL':'Pacific/Honolulu',
+    'ANC':'America/Anchorage',
+    'LAX':'America/Los_Angeles','SFO':'America/Los_Angeles','SEA':'America/Los_Angeles','SJC':'America/Los_Angeles',
+    'YVR':'America/Vancouver',
+    'DEN':'America/Denver','SLC':'America/Denver',
+    'PHX':'America/Phoenix','TUS':'America/Phoenix',
+    'ORD':'America/Chicago','MDW':'America/Chicago','DFW':'America/Chicago','IAH':'America/Chicago','MSP':'America/Chicago','STL':'America/Chicago',
+    'MEX':'America/Mexico_City','GDL':'America/Mexico_City',
+    'JFK':'America/New_York','LGA':'America/New_York','EWR':'America/New_York',
+    'MIA':'America/New_York','ATL':'America/New_York','BOS':'America/New_York','IAD':'America/New_York','DCA':'America/New_York','CLT':'America/New_York','PHL':'America/New_York','DTW':'America/New_York',
+    'YYZ':'America/Toronto','YUL':'America/Montreal',
+    'BOG':'America/Bogota',
+    'LIM':'America/Lima',
+    'SCL':'America/Santiago',
+    'GRU':'America/Sao_Paulo','CGH':'America/Sao_Paulo','BSB':'America/Sao_Paulo',
+    'EZE':'America/Buenos_Aires','AEP':'America/Buenos_Aires',
+    // IATA city codes (Americas)
+    'NYC':'America/New_York','CHI':'America/Chicago','LON':'Europe/London','PAR':'Europe/Paris',
+    'BUE':'America/Buenos_Aires','RIO':'America/Sao_Paulo','YTO':'America/Toronto',
+    // Europe
+    'KEF':'Atlantic/Reykjavik',
+    'LHR':'Europe/London','LGW':'Europe/London','STN':'Europe/London','LCY':'Europe/London',
+    'DUB':'Europe/Dublin',
+    'LIS':'Europe/Lisbon','OPO':'Europe/Lisbon',
+    'CDG':'Europe/Paris','ORY':'Europe/Paris',
+    'AMS':'Europe/Amsterdam',
+    'BRU':'Europe/Brussels','CRL':'Europe/Brussels',
+    'BER':'Europe/Berlin','MUC':'Europe/Berlin','FRA':'Europe/Berlin','HAM':'Europe/Berlin','DUS':'Europe/Berlin',
+    'ZRH':'Europe/Zurich','GVA':'Europe/Zurich',
+    'MAD':'Europe/Madrid','BCN':'Europe/Madrid',
+    'FCO':'Europe/Rome','MXP':'Europe/Rome','LIN':'Europe/Rome',
+    'VIE':'Europe/Vienna',
+    'PRG':'Europe/Prague',
+    'WAW':'Europe/Warsaw','KRK':'Europe/Warsaw',
+    'ARN':'Europe/Stockholm','GOT':'Europe/Stockholm',
+    'OSL':'Europe/Oslo','BGO':'Europe/Oslo',
+    'CPH':'Europe/Copenhagen',
+    'HEL':'Europe/Helsinki',
+    'ATH':'Europe/Athens','SKG':'Europe/Athens',
+    'OTP':'Europe/Bucharest','BBU':'Europe/Bucharest',
+    'IST':'Europe/Istanbul','SAW':'Europe/Istanbul',
+    'SVO':'Europe/Moscow','DME':'Europe/Moscow','VKO':'Europe/Moscow',
+    // IATA city codes (Europe)
+    'MIL':'Europe/Rome','ROM':'Europe/Rome','MOW':'Europe/Moscow','BRN':'Europe/Zurich',
+    // Africa
+    'CMN':'Africa/Casablanca','RAK':'Africa/Casablanca',
+    'LOS':'Africa/Lagos','ABV':'Africa/Lagos',
+    'CAI':'Africa/Cairo','HRG':'Africa/Cairo',
+    'NBO':'Africa/Nairobi','MBA':'Africa/Nairobi',
+    'JNB':'Africa/Johannesburg','CPT':'Africa/Johannesburg','DUR':'Africa/Johannesburg',
+    // Middle East
+    'TLV':'Asia/Jerusalem','SDV':'Asia/Jerusalem',
+    'RUH':'Asia/Riyadh','JED':'Asia/Riyadh','DMM':'Asia/Riyadh',
+    'DXB':'Asia/Dubai','AUH':'Asia/Dubai','SHJ':'Asia/Dubai',
+    'IKA':'Asia/Tehran','THR':'Asia/Tehran','MHD':'Asia/Tehran',
+    // South & Central Asia
+    'KHI':'Asia/Karachi','LHE':'Asia/Karachi','ISB':'Asia/Karachi',
+    'BOM':'Asia/Kolkata','DEL':'Asia/Kolkata','BLR':'Asia/Kolkata','MAA':'Asia/Kolkata','CCU':'Asia/Kolkata','HYD':'Asia/Kolkata',
+    'CMB':'Asia/Colombo',
+    'DAC':'Asia/Dhaka','CGP':'Asia/Dhaka',
+    'KTM':'Asia/Kathmandu',
+    // Southeast Asia
+    'BKK':'Asia/Bangkok','DMK':'Asia/Bangkok','CNX':'Asia/Bangkok',
+    'SGN':'Asia/Ho_Chi_Minh','HAN':'Asia/Ho_Chi_Minh',
+    'CGK':'Asia/Jakarta','SUB':'Asia/Jakarta','DPS':'Asia/Jakarta',
+    'SIN':'Asia/Singapore',
+    'KUL':'Asia/Kuala_Lumpur','PEN':'Asia/Kuala_Lumpur',
+    'MNL':'Asia/Manila','CEB':'Asia/Manila',
+    // East Asia
+    'PVG':'Asia/Shanghai','SHA':'Asia/Shanghai','PEK':'Asia/Shanghai','PKX':'Asia/Shanghai','CAN':'Asia/Shanghai','CTU':'Asia/Shanghai','XIY':'Asia/Shanghai',
+    'HKG':'Asia/Hong_Kong',
+    'TPE':'Asia/Taipei','TSA':'Asia/Taipei',
+    'ICN':'Asia/Seoul','GMP':'Asia/Seoul',
+    'NRT':'Asia/Tokyo','HND':'Asia/Tokyo','KIX':'Asia/Tokyo','ITM':'Asia/Tokyo',
+    // IATA city codes (Asia)
+    'BJS':'Asia/Shanghai','TYO':'Asia/Tokyo','SEL':'Asia/Seoul',
+    // Oceania
+    'PER':'Australia/Perth',
+    'ADL':'Australia/Adelaide',
+    'SYD':'Australia/Sydney','CBR':'Australia/Sydney',
+    'MEL':'Australia/Melbourne','AVV':'Australia/Melbourne',
+    'BNE':'Australia/Brisbane','OOL':'Australia/Brisbane',
+    'AKL':'Pacific/Auckland','WLG':'Pacific/Auckland','CHC':'Pacific/Auckland',
+    'NAN':'Pacific/Fiji','SUV':'Pacific/Fiji',
+  };
+
   // Common timezone abbreviations / codes → IANA zone mapping
   const TZ_ALIASES = {
     // North America
@@ -273,10 +362,14 @@
       const aliases = Object.entries(TZ_ALIASES)
         .filter(([,v]) => v === tz)
         .map(([k]) => k);
-      return {zone:tz, label, aliases};
+      // Collect airport/city codes that point to this zone
+      const airports = Object.entries(AIRPORT_CODES)
+        .filter(([,v]) => v === tz)
+        .map(([k]) => k);
+      return {zone:tz, label, aliases, airports};
     });
   } catch {
-    ALL_ZONES = POPULAR.map(p => ({...p, aliases:[]}));
+    ALL_ZONES = POPULAR.map(p => ({...p, aliases:[], airports:[]}));
   }
 
   const STORAGE_KEY = 'timepage_zones';
@@ -418,28 +511,32 @@
 
   function populateList(query) {
     const q = query.toLowerCase().trim();
+    const qUpper = q.toUpperCase();
 
     // Check if query matches a TZ abbreviation exactly → show that zone first
     const aliasMatch = q ? Object.entries(TZ_ALIASES).find(([k]) => k.toLowerCase() === q) : null;
+    // Check if query matches an airport/city code exactly → boost that zone
+    const airportExactMatch = qUpper.length >= 2 ? AIRPORT_CODES[qUpper] : null;
 
     let source, filtered;
     if (!q) {
       source = POPULAR;
       filtered = source;
     } else {
-      // Search ALL_ZONES by label, full zone path, region, and aliases
+      // Search ALL_ZONES by label, full zone path, region, aliases, and airport codes
       filtered = ALL_ZONES.filter(z => {
         const lbl = z.label.toLowerCase();
         const zn = z.zone.toLowerCase().replace(/_/g,' ');
         const region = z.zone.split('/')[0].toLowerCase();
         const aliasHit = z.aliases && z.aliases.some(a => a.toLowerCase().includes(q));
-        return lbl.includes(q) || zn.includes(q) || region.includes(q) || aliasHit;
+        const airportHit = z.airports && z.airports.some(a => a.toLowerCase().includes(q));
+        return lbl.includes(q) || zn.includes(q) || region.includes(q) || aliasHit || airportHit;
       });
 
-      // Boost alias exact-match to top
-      if (aliasMatch) {
-        const matchZone = aliasMatch[1];
-        filtered.sort((a, b) => (a.zone === matchZone ? -1 : b.zone === matchZone ? 1 : 0));
+      // Boost exact-match zones (alias or airport code) to top
+      const boostZone = (aliasMatch && aliasMatch[1]) || airportExactMatch || null;
+      if (boostZone) {
+        filtered.sort((a, b) => (a.zone === boostZone ? -1 : b.zone === boostZone ? 1 : 0));
       }
     }
 
@@ -455,7 +552,8 @@
         off = parts.find(p => p.type === 'timeZoneName')?.value || '';
       } catch {}
       const aliasTag = z.aliases && z.aliases.length ? ` (${z.aliases.join(', ')})` : '';
-      li.innerHTML = `<span>${esc(z.label)}${esc(aliasTag)}</span><span class="tz-offset">${esc(off)}</span>`;
+      const airportTag = z.airports && z.airports.length ? ` [${z.airports.join(', ')}]` : '';
+      li.innerHTML = `<span>${esc(z.label)}${esc(aliasTag)}${esc(airportTag)}</span><span class="tz-offset">${esc(off)}</span>`;
       li.addEventListener('click', () => { addZone(z.zone, z.label); closeModal(); });
       $list.appendChild(li);
     });
